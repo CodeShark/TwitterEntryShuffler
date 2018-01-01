@@ -12,6 +12,8 @@ using namespace std;
 
 typedef pair<string, uchar_vector> t_handlehashpair;
 
+// These values are just an example. Do not get too excited if you "win" using these values.
+// The real values will be revealed after Bitcoin block 502961.
 uchar_vector secret("50D858E0985ECC7F60418AAF0CC5AB587F42C2570A884095A9E8CCACD0F6545C");
 uchar_vector blockHash("00000000000000000024fb37364cbf81fd49cc2d51c09c75c35433c3a1945d04");
 
@@ -62,40 +64,31 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    string line;
-    vector<t_handlehashpair> handlehashpairs;
-    uchar_vector nonce = secret ^ blockHash;
-
-/*
-    cout << "secret:     " << secret.getHex() << endl;
-    cout << "block hash: " << blockHash.getHex() << endl;
-    cout << "nonce:      " << nonce.getHex() << endl;
-
-    return 0;
-*/
-
-    ifstream inputFile(argv[1]);
-    while (getline(inputFile, line))
-    {
-        string handle = getHandleFromUrl(line);
-        handlehashpairs.push_back(make_pair(handle, getHandleHash(handle, nonce)));
-    }
-
     try
     {
+        string line;
+        vector<t_handlehashpair> handlehashpairs;
+        uchar_vector nonce = secret ^ blockHash;
+
+        ifstream inputFile(argv[1]);
+        while (getline(inputFile, line))
+        {
+            string handle = getHandleFromUrl(line);
+            handlehashpairs.push_back(make_pair(handle, getHandleHash(handle, nonce)));
+        }
+
         sort(handlehashpairs.begin(), handlehashpairs.end(), sortByHandleHash);
+
+        ofstream outputFile(argv[2], ofstream::trunc); 
+        for (auto handlehashpair: handlehashpairs)
+        {
+            outputFile << handlehashpair.second.getHex() << " " << handlehashpair.first << endl;
+        }
     }
     catch (exception& e)
     {
         cerr << e.what() << endl;
         return -2;
     }
-
-    ofstream outputFile(argv[2], ofstream::trunc); 
-    for (auto handlehashpair: handlehashpairs)
-    {
-        outputFile << handlehashpair.second.getHex() << " " << handlehashpair.first << endl;
-    }
-
     return 0;
 }
